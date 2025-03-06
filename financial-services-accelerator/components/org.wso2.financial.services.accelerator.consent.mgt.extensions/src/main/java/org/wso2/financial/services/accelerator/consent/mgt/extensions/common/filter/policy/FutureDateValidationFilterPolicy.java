@@ -24,7 +24,7 @@ import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.common.exception.FinancialServicesException;
 import org.wso2.financial.services.accelerator.common.policy.FSPolicyExecutionException;
 import org.wso2.financial.services.accelerator.common.policy.filter.FSFilterPolicy;
-import org.wso2.financial.services.accelerator.common.policy.utils.FilterPolicyUtils;
+import org.wso2.financial.services.accelerator.common.policy.utils.PolicyUtils;
 import org.wso2.financial.services.accelerator.consent.mgt.extensions.common.ConsentExtensionUtils;
 
 
@@ -50,7 +50,7 @@ public class FutureDateValidationFilterPolicy extends FSFilterPolicy {
             throws FSPolicyExecutionException {
 
         try {
-            String payload = FilterPolicyUtils.getStringPayload((HttpServletRequest) servletRequest);
+            String payload = PolicyUtils.getStringPayload((HttpServletRequest) servletRequest);
             JSONObject payloadObj = new JSONObject(payload);
 
             Object applicableParams = propertyMap.get("applicable_params");

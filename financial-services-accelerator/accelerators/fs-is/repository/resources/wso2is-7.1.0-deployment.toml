@@ -292,7 +292,7 @@ signing_algorithms=["PS256","ES256"]
 jwt_signature_algorithm="PS256"
 
 [oauth.oidc.extensions]
-claim_callback_handler = "org.wso2.financial.services.accelerator.identity.extensions.claims.FSDefaultOIDCClaimsCallbackHandler"
+claim_callback_handler = "org.wso2.financial.services.accelerator.identity.extensions.claims.FSJWTAccessTokenOIDCClaimsHandler"
 request_object_validator = "org.wso2.financial.services.accelerator.identity.extensions.auth.extensions.request.validator.FSRequestObjectValidationExtension"
 
 [oauth.mutualtls]

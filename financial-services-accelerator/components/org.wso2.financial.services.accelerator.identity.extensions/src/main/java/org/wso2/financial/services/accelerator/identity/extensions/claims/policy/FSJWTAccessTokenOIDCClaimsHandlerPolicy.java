@@ -15,21 +15,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy;
+package org.wso2.financial.services.accelerator.identity.extensions.claims.policy;
 
-import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.financial.services.accelerator.common.policy.FSPolicy;
 
 import java.util.Map;
 
 /**
- * Abstract class for Financial Services Grant Handler Policy.
+ * Abstract class for Financial Services JWT Access Token OIDC Claims Handler Policy.
  */
-public abstract class FSGrantHandlerPolicy extends FSPolicy {
+public abstract class FSJWTAccessTokenOIDCClaimsHandlerPolicy extends FSPolicy {
 
-    public abstract void postIssueAccessToken(OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO,
-                                                                  OAuthTokenReqMessageContext tokReqMsgCtx,
-                                                                  Map<String, Object> propertyMap);
+    public abstract void handleCustomClaims(OAuthTokenReqMessageContext tokenReqMessageContext,
+                                            Map<String, Object> userClaimsInOIDCDialect,
+                                            Map<String, Object> propertyMap);
 
 }

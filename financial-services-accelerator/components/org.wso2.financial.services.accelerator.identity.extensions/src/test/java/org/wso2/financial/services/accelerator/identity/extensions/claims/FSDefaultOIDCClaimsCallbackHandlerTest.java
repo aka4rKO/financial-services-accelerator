@@ -64,7 +64,7 @@ import static org.wso2.carbon.identity.core.util.IdentityCoreConstants.MULTI_ATT
 public class FSDefaultOIDCClaimsCallbackHandlerTest {
 
     @Spy
-    private FSDefaultOIDCClaimsCallbackHandler obDefaultOIDCClaimsCallbackHandler;
+    private FSJWTAccessTokenOIDCClaimsHandler obDefaultOIDCClaimsCallbackHandler;
 
     @BeforeClass
     public void beforeClass() throws IdentityApplicationManagementException {
@@ -84,7 +84,7 @@ public class FSDefaultOIDCClaimsCallbackHandlerTest {
 
         OAuth2ServiceComponentHolder.setApplicationMgtService(applicationMgtService);
 
-        obDefaultOIDCClaimsCallbackHandler = Mockito.spy(FSDefaultOIDCClaimsCallbackHandler.class);
+        obDefaultOIDCClaimsCallbackHandler = Mockito.spy(FSJWTAccessTokenOIDCClaimsHandler.class);
     }
 
     public static String getFilePath(String fileName) {

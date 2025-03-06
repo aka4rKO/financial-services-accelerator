@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.financial.services.accelerator.common.constant.FinancialServicesConstants;
 import org.wso2.financial.services.accelerator.common.exception.FinancialServicesException;
@@ -65,6 +66,8 @@ import java.util.stream.Collectors;
 public class IdentityCommonUtils {
 
     private static final Log log = LogFactory.getLog(IdentityCommonUtils.class);
+    private static final Map<String, Object> identityConfigurations = IdentityExtensionsDataHolder.getInstance()
+            .getConfigurationMap();
 
     /**
      * Method to obtain the Object when the full class path is given.
@@ -96,8 +99,7 @@ public class IdentityCommonUtils {
      */
     public static String[] removeInternalScopes(String[] scopes) {
 
-        String consentIdClaim = IdentityExtensionsDataHolder.getInstance().getConfigurationMap()
-                .get(FinancialServicesConstants.CONSENT_ID_CLAIM_NAME).toString();
+        String consentIdClaim = identityConfigurations.get(FinancialServicesConstants.CONSENT_ID_CLAIM_NAME).toString();
 
         if (scopes != null && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
@@ -344,5 +346,53 @@ public class IdentityCommonUtils {
 
         JwtJtiCacheKey cacheKey = JwtJtiCacheKey.of(jtiValue);
         return JwtJtiCache.getInstance().getFromCache(cacheKey);
+    }
+
+    public static void addConsentIDClaimToOIDCDialect(OAuthTokenReqMessageContext tokenReqMessageContext,
+                                                      Map<String, Object> userClaimsInOIDCDialect) {
+
+        String consentIdClaimName =
+                identityConfigurations.get(FinancialServicesConstants.CONSENT_ID_CLAIM_NAME).toString();
+        String consentID = Arrays.stream(tokenReqMessageContext.getScope())
+                .filter(scope -> scope.contains(IdentityCommonConstants.FS_PREFIX)).findFirst().orElse(null);
+        if (StringUtils.isEmpty(consentID)) {
+            consentID = Arrays.stream(tokenReqMessageContext.getScope())
+                    .filter(scope -> scope.contains(consentIdClaimName))
+                    .findFirst().orElse(StringUtils.EMPTY)
+                    .replaceAll(consentIdClaimName, StringUtils.EMPTY);
+        } else {
+            consentID = consentID.replace(IdentityCommonConstants.FS_PREFIX, StringUtils.EMPTY);
+        }
+
+        if (StringUtils.isNotEmpty(consentID)) {
+            userClaimsInOIDCDialect.put(consentIdClaimName, consentID);
+        }
+    }
+
+    /**
+     * Update the subject claim of the JWT claims set if any of the following configurations are true
+     *  1. Remove tenant domain from subject (fs.identity.token.remove_tenant_domain_from_subject)
+     *  2. Remove user store domain from subject (fs.identity.token.remove_user_store_domain_from_subject)
+     * @param tokenReqMessageContext token request message context
+     * @param userClaimsInOIDCDialect user claims in OIDC dialect as a map
+     */
+    public static void updateSubClaim(OAuthTokenReqMessageContext tokenReqMessageContext,
+                                      Map<String, Object> userClaimsInOIDCDialect) {
+
+        Object removeTenantDomainConfig =
+                identityConfigurations.get(FinancialServicesConstants.REMOVE_TENANT_DOMAIN_FROM_SUBJECT);
+        Boolean removeTenantDomain = removeTenantDomainConfig != null
+                && Boolean.parseBoolean(removeTenantDomainConfig.toString());
+
+        Object removeUserStoreDomainConfig =
+                identityConfigurations.get(FinancialServicesConstants.REMOVE_USER_STORE_DOMAIN_FROM_SUBJECT);
+        Boolean removeUserStoreDomain = removeUserStoreDomainConfig != null
+                && Boolean.parseBoolean(removeUserStoreDomainConfig.toString());
+
+        if (removeTenantDomain || removeUserStoreDomain) {
+            String subClaim = tokenReqMessageContext.getAuthorizedUser()
+                    .getUsernameAsSubjectIdentifier(!removeUserStoreDomain, !removeTenantDomain);
+            userClaimsInOIDCDialect.put(IdentityCommonConstants.SUBJECT_CLAIM, subClaim);
+        }
     }
 }

@@ -29,6 +29,7 @@ import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.common.constant.FinancialServicesConstants;
 import org.wso2.financial.services.accelerator.common.exception.FinancialServicesException;
 import org.wso2.financial.services.accelerator.common.exception.FinancialServicesRuntimeException;
+import org.wso2.financial.services.accelerator.common.policy.FSPolicyExecutionException;
 import org.wso2.financial.services.accelerator.common.util.HTTPClientUtils;
 
 import java.io.IOException;
@@ -36,17 +37,20 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Filter Policy Utils.
  */
-public class FilterPolicyUtils {
+public class PolicyUtils {
 
-    private static final Log log = LogFactory.getLog(FilterPolicyUtils.class);
+    private static final Log log = LogFactory.getLog(PolicyUtils.class);
 
     /**
      * Extract string payload from request object.
@@ -149,6 +153,59 @@ public class FilterPolicyUtils {
         InputStream in = response.getEntity().getContent();
         JSONObject tokenResponse = new JSONObject(IOUtils.toString(in, String.valueOf(StandardCharsets.UTF_8)));
         return tokenResponse.getString("access_token");
+    }
+
+    /**
+     * Method to get external service request.
+     *
+     * @param requestPayloadObj
+     * @param serviceType
+     * @return
+     * @throws FSPolicyExecutionException
+     */
+    public static ExternalServiceRequest getExternalServiceRequest(JSONObject requestPayloadObj, String serviceType)
+            throws FSPolicyExecutionException {
+
+        switch (serviceType) {
+            case "consent":
+                return getExternalServiceRequestForConsent(requestPayloadObj);
+            case "refresh-token-validity-period":
+                return getExternalServiceRequestForRefreshTokenValidityPeriod(requestPayloadObj);
+            default:
+                throw new FSPolicyExecutionException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "internal_server_error", "Invalid service type");
+        }
+    }
+
+    /**
+     * Method to get external service request for refresh token validity period.
+     *
+     * @param requestPayloadObj
+     * @return
+     */
+    public static ExternalServiceRequest getExternalServiceRequestForRefreshTokenValidityPeriod(
+            JSONObject requestPayloadObj) {
+
+        ExternalServiceRequest.EventRequest eventRequest =
+                new ExternalServiceRequest.EventRequest(requestPayloadObj, new ArrayList<>(), new ArrayList<>());
+        ExternalServiceRequest.Event event = new ExternalServiceRequest.Event(eventRequest);
+
+        return new ExternalServiceRequest(UUID.randomUUID().toString(), event, "update");
+    }
+
+    /**
+     * Method to get external service request for consent.
+     *
+     * @param requestPayloadObj
+     * @return
+     */
+    public static ExternalServiceRequest getExternalServiceRequestForConsent(JSONObject requestPayloadObj) {
+
+        ExternalServiceRequest.EventRequest eventRequest =
+                new ExternalServiceRequest.EventRequest(requestPayloadObj, new ArrayList<>(), new ArrayList<>());
+        ExternalServiceRequest.Event event = new ExternalServiceRequest.Event(eventRequest);
+
+        return new ExternalServiceRequest(UUID.randomUUID().toString(), event, "validate");
     }
 
     /**

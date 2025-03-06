@@ -23,11 +23,9 @@ import org.wso2.financial.services.accelerator.common.exception.FinancialService
 import org.wso2.financial.services.accelerator.common.policy.FSPolicyExecutionException;
 import org.wso2.financial.services.accelerator.common.policy.filter.FSFilterPolicy;
 import org.wso2.financial.services.accelerator.common.policy.utils.ExternalServiceRequest;
-import org.wso2.financial.services.accelerator.common.policy.utils.FilterPolicyUtils;
+import org.wso2.financial.services.accelerator.common.policy.utils.PolicyUtils;
 
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -45,15 +43,15 @@ public class ExternalValidationFilterPolicy extends FSFilterPolicy {
 
         if (servletRequest instanceof HttpServletRequest) {
             try {
-                String requestPayload = FilterPolicyUtils.getStringPayload((HttpServletRequest) servletRequest);
+                String requestPayload = PolicyUtils.getStringPayload((HttpServletRequest) servletRequest);
                 JSONObject requestPayloadObj = new JSONObject(requestPayload);
 
-                ExternalServiceRequest externalServiceRequest = getExternalServiceRequest(requestPayloadObj,
-                        propertyMap.get("service_type").toString());
+                ExternalServiceRequest externalServiceRequest = PolicyUtils
+                        .getExternalServiceRequest(requestPayloadObj, propertyMap.get("service_type").toString());
 
                 String externalServicesPayload = (new JSONObject(externalServiceRequest)).toString();
 
-                JSONObject externalServiceResponse = FilterPolicyUtils.invokeExternalServiceCall(propertyMap,
+                JSONObject externalServiceResponse = PolicyUtils.invokeExternalServiceCall(propertyMap,
                         externalServicesPayload);
 
                 servletRequest.setAttribute("externalServiceResponse", externalServiceResponse.toString());
@@ -69,26 +67,5 @@ public class ExternalValidationFilterPolicy extends FSFilterPolicy {
     public void processResponse(ServletResponse servletResponse, Map<String, Object> propertyMap)
             throws FSPolicyExecutionException {
 
-    }
-
-    private ExternalServiceRequest getExternalServiceRequest(JSONObject requestPayloadObj, String serviceType)
-            throws FSPolicyExecutionException {
-
-        switch (serviceType) {
-            case "consent":
-                return getExternalServiceRequestForConsent(requestPayloadObj);
-            default:
-                throw new FSPolicyExecutionException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        "internal_server_error", "Invalid service type");
-        }
-    }
-
-    private ExternalServiceRequest getExternalServiceRequestForConsent(JSONObject requestPayloadObj) {
-
-        ExternalServiceRequest.EventRequest eventRequest =
-                new ExternalServiceRequest.EventRequest(requestPayloadObj, new ArrayList<>(), new ArrayList<>());
-        ExternalServiceRequest.Event event = new ExternalServiceRequest.Event(eventRequest);
-
-        return new ExternalServiceRequest(UUID.randomUUID().toString(), event, "validate");
     }
 }

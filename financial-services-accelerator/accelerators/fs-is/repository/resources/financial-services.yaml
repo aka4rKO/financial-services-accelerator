@@ -43,6 +43,25 @@ components:
           #tokenEndpoint: "https://auth.example.com/token"
           #grantType: "client_credentials"
 
+    tokenExecutionFlowCallExternalAPI: &tokenExecutionFlowCallExternalAPI
+      name: "TokenExecutionFlowCallExternalAPI Policy"
+      type: "grant-handler-policy"
+      description: "Invoke an external service."
+      class: "org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy.ExternalRefreshTokenValidityGrantHandlerPolicy"
+      parameters:
+        endpoint: "http://localhost:9766/api/fs/consent/manage/external"
+        service_type: "refresh-token-validity-period"
+        security:
+          type: "basic-auth"
+          username: ""
+          password: ""
+          # Change to "oauth2" if needed
+          #type: "oauth2" # Change to "basic-auth" if needed
+          #clientId: "your-client-id"
+          #clientSecret: "your-client-secret"
+          #tokenEndpoint: "https://auth.example.com/token"
+          #grantType: "client_credentials"
+
 apis:
   - name: "TokenAPI"
     version: "1.0"
@@ -54,6 +73,7 @@ apis:
             policies:
           execution-flow:
             policies:
+              - *tokenExecutionFlowCallExternalAPI
           response-flow:
             policies:
 

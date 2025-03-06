@@ -25,7 +25,12 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.ClientCredentialsGrantHandler;
 import org.wso2.financial.services.accelerator.common.util.FinancialServicesUtils;
-import org.wso2.financial.services.accelerator.identity.extensions.util.IdentityCommonUtils;
+import org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy.FSGrantHandlerPolicy;
+import org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy.RemoveInternalScopesGrantHandlerPolicy;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * FS specific client credentials code grant handler.
@@ -38,8 +43,14 @@ public class FSClientCredentialsGrantHandler extends ClientCredentialsGrantHandl
         try {
             if (FinancialServicesUtils.isRegulatoryApp(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId())) {
                 OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO = super.issue(tokReqMsgCtx);
-                executeInitialStep(oAuth2AccessTokenRespDTO, tokReqMsgCtx);
-                tokReqMsgCtx.setScope(IdentityCommonUtils.removeInternalScopes(tokReqMsgCtx.getScope()));
+
+                List<FSGrantHandlerPolicy> policies = new ArrayList<>();
+                policies.add(new RemoveInternalScopesGrantHandlerPolicy());
+
+                for (FSGrantHandlerPolicy policy : policies) {
+                    policy.postIssueAccessToken(oAuth2AccessTokenRespDTO, tokReqMsgCtx, new HashMap<>());
+                }
+
                 return oAuth2AccessTokenRespDTO;
             }
         } catch (RequestObjectException e) {
@@ -48,15 +59,4 @@ public class FSClientCredentialsGrantHandler extends ClientCredentialsGrantHandl
         return super.issue(tokReqMsgCtx);
     }
 
-
-    /**
-     * Extend this method to perform any actions which requires internal scopes.
-     *
-     * @param oAuth2AccessTokenRespDTO
-     * @param tokReqMsgCtx
-     */
-    public void executeInitialStep(OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO,
-                                   OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
-
-    }
 }

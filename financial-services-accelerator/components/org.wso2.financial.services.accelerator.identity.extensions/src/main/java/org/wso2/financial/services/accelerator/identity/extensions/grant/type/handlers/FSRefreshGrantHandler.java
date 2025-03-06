@@ -28,12 +28,15 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.RefreshGrantHandler;
 import org.wso2.financial.services.accelerator.common.constant.FinancialServicesConstants;
 import org.wso2.financial.services.accelerator.common.util.FinancialServicesUtils;
+import org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy.FSGrantHandlerPolicy;
+import org.wso2.financial.services.accelerator.identity.extensions.grant.type.handlers.policy.RemoveInternalScopesGrantHandlerPolicy;
 import org.wso2.financial.services.accelerator.identity.extensions.internal.IdentityExtensionsDataHolder;
-import org.wso2.financial.services.accelerator.identity.extensions.util.IdentityCommonUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * FS specific refresh grant handler.
@@ -48,11 +51,14 @@ public class FSRefreshGrantHandler extends RefreshGrantHandler {
         try {
             if (FinancialServicesUtils.isRegulatoryApp(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId())) {
                 OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO = super.issue(tokReqMsgCtx);
-                executeInitialStep(oAuth2AccessTokenRespDTO, tokReqMsgCtx);
-                tokReqMsgCtx.setScope(IdentityCommonUtils.removeInternalScopes(tokReqMsgCtx.getScope()));
-                if (tokReqMsgCtx.getScope().length == 0) {
-                    oAuth2AccessTokenRespDTO.setAuthorizedScopes("");
+
+                List<FSGrantHandlerPolicy> policies = new ArrayList<>();
+                policies.add(new RemoveInternalScopesGrantHandlerPolicy());
+
+                for (FSGrantHandlerPolicy policy : policies) {
+                    policy.postIssueAccessToken(oAuth2AccessTokenRespDTO, tokReqMsgCtx, new HashMap<>());
                 }
+
                 return oAuth2AccessTokenRespDTO;
             }
         } catch (RequestObjectException e) {
@@ -61,17 +67,12 @@ public class FSRefreshGrantHandler extends RefreshGrantHandler {
         return super.issue(tokReqMsgCtx);
     }
 
-    /**
-     * Extend this method to perform any actions which requires internal scopes.
-     *
-     * @param oAuth2AccessTokenRespDTO
-     * @param tokReqMsgCtx
-     */
-    public void executeInitialStep(OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO,
-                                   OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
-
-    }
-
+    // TODO: might not need this since we are adding the consent id claim to the token
+    // why do we need to consent ID claim in IS only use cases?
+    // even this is required to add it to the token to be used in the APIM context.
+    // what are the other use cases of using this consent ID in the JWT token as a claim?
+    // AFAIK this consent ID is added to the token to do some APIM handler executor level validations, to see
+    // if this consent
     @Override
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
