@@ -83,15 +83,15 @@ public class ServiceExtensionUtils {
                     FinancialServicesConstants.JSON_CONTENT_TYPE);
 
             //Setting security credentials
-            if (FinancialServicesConstants.BASIC_AUTH.equals(configParser.getServiceExtensionsEndpointSecurityType())) {
-                setBasicAuthHeader(httpPost, configParser.getServiceExtensionsEndpointSecurityBasicAuthUsername(),
-                        configParser.getServiceExtensionsEndpointSecurityBasicAuthPassword());
-            } else if (FinancialServicesConstants.OAUTH2
-                    .equals(configParser.getServiceExtensionsEndpointSecurityType())) {
-                setOauth2AuthHeader(httpPost, configParser.getServiceExtensionsEndpointSecurityOauth2Token());
-            } else {
-                throw new FinancialServicesException("Invalid security type for service extensions endpoint");
-            }
+//            if (FinancialServicesConstants.BASIC_AUTH.equals(configParser.getServiceExtensionsEndpointSecurityType())) {
+//                setBasicAuthHeader(httpPost, configParser.getServiceExtensionsEndpointSecurityBasicAuthUsername(),
+//                        configParser.getServiceExtensionsEndpointSecurityBasicAuthPassword());
+//            } else if (FinancialServicesConstants.OAUTH2
+//                    .equals(configParser.getServiceExtensionsEndpointSecurityType())) {
+//                setOauth2AuthHeader(httpPost, configParser.getServiceExtensionsEndpointSecurityOauth2Token());
+//            } else {
+//                throw new FinancialServicesException("Invalid security type for service extensions endpoint");
+//            }
 
             CloseableHttpResponse response = HTTPClientUtils.getHttpClient().execute(httpPost);
             HttpEntity entity = response.getEntity();
